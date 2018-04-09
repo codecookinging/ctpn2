@@ -1,0 +1,53 @@
+COMMON:
+  CKPT: E:/ctpn_yi/checkpoints/checkpoint
+PREPARE:
+  SLOP_THRESHOLD: 1
+TRAIN:
+  USE_FLIPPED: False
+  USE_CACHED: False
+  CACHE_PATH: E:\ctpn_yi\dataset\cache
+  TRAIN_PATH: E:\ctpn_yi\dataset\for_train
+  COORDINATE_NUM: 4
+  IMS_BATCH_SIZE: 1  # 每轮图片的数目
+  BATCH_SIZE: 300 # 每轮生成的anchor个数
+  FG_FRACTION: 0.25
+  SCALES: [600,]
+  PIXEL_MEANS: [102.9801, 115.9465, 122.7717]
+  MAX_SIZE: 1000
+  WEIGHT_DECAY: 0.0005 #正则化项的系数
+  RPN_NEGATIVE_OVERLAP: 0.25
+  RPN_POSITIVE_OVERLAP: 0.7
+  RPN_FG_FRACTION: 0.5
+  RPN_BATCHSIZE: 256
+  OHEM: False
+  LEARNING_RATE: 0.0001
+  SOLVER: "Momentum"
+  MOMENTUM: 0.9
+  STEPSIZE: 12000
+  GAMMA: 0.1
+  DISPLAY: 50
+  MAX_ITER: 50000
+  SNAPSHOT_ITERS: 1000
+  RANDOM_DOWNSAMPLE: Ture
+TEST:
+  DETECT_MODE: "H"
+  DATA_DIR: E:\ctpn_yi\dataset\for_test # 测试图片的存储路径
+  RESULT_DIR: E:\ctpn_yi\data\results # 结果路径
+  SCALES: 600
+  SCALE: 600
+  MAX_SCALE: 1200
+  TEXT_PROPOSALS_WIDTH: 16
+  MIN_NUM_PROPOSALS: 2 # 文本的宽度最小由几个片段构成，乘以TEXT_PROPOSALS_WIDTH，则表示最小由几个像素构成
+  MIN_RATIO: 0.5 # 文本的宽度除以高度的阈值
+  LINE_MIN_SCORE: 0.96 # 整个文本的分数阈值，，
+  MAX_HORIZONTAL_GAP: 50  # 水平片段大于该值的，就不连接在一起了
+  TEXT_PROPOSALS_MIN_SCORE: 0.85 # 对于anchor而言，大于该分数就判定为正例
+  TEXT_PROPOSALS_NMS_THRESH: 0.2
+  MIN_V_OVERLAPS: 0.7
+  MIN_SIZE_SIM: 0.7
+  RPN_PRE_NMS_TOP_N: 12000
+  RPN_POST_NMS_TOP_N: 2000
+  RPN_NMS_THRESH: 0.5  # y方向的IOU大于该值的，就连接起来
+  RPN_MIN_SIZE: 16
+
+
