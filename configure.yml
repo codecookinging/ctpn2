@@ -30,7 +30,7 @@ TRAIN:
   SNAPSHOT_ITERS: 1000
   RANDOM_DOWNSAMPLE: Ture
 TEST:
-  DETECT_MODE: "H"
+  DETECT_MODE: "O" # 字符"O"表示检测倾斜的，字符"H"表示检测水平的
   DATA_DIR: E:\ctpn_yi\dataset\for_test # 测试图片的存储路径
   RESULT_DIR: E:\ctpn_yi\data\results # 结果路径
   SCALES: 600
@@ -39,9 +39,9 @@ TEST:
   TEXT_PROPOSALS_WIDTH: 16
   MIN_NUM_PROPOSALS: 2 # 文本的宽度最小由几个片段构成，乘以TEXT_PROPOSALS_WIDTH，则表示最小由几个像素构成
   MIN_RATIO: 0.5 # 文本的宽度除以高度的阈值
-  LINE_MIN_SCORE: 0.96 # 整个文本的分数阈值，，
+  LINE_MIN_SCORE: 0.989 # 整个文本的分数阈值，，
   MAX_HORIZONTAL_GAP: 50  # 水平片段大于该值的，就不连接在一起了
-  TEXT_PROPOSALS_MIN_SCORE: 0.85 # 对于anchor而言，大于该分数就判定为正例
+  TEXT_PROPOSALS_MIN_SCORE: 0.92 # 对于anchor而言，大于该分数就判定为正例
   TEXT_PROPOSALS_NMS_THRESH: 0.2
   MIN_V_OVERLAPS: 0.7
   MIN_SIZE_SIM: 0.7
