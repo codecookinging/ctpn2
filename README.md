@@ -33,7 +33,7 @@ ctpn_new--|___ctpn 网络抽象层，以及网络运行时需要做的一些操�
 train_set.txt格式变为 **xxxx.jpg,scale,width,height,channel, scale是缩放比例**
 > 说明：Imageinfo下的每个txt格式变更，原来~~xmin,ymin,xmax,ymax,width,height,channel~~弃用，新的格式为**xmin,ymin,xmax,ymax**,
 > train_set.txt格式变为 **xxxx.jpg,width,height,channel,scale** scale为缩放比例
->>>>>>> 5a7160d269d313d7fa13d18bd4633b7bf6c4ec20
+
 
 **将原始数据放在dataset/ICPR_text_train下，文件夹分别为image和text, 两个文件夹的数据必须对应一致。在ctpn_new目录下运行预处理脚本, 处理后的数据将存在dataset/for_train下**
 ## 重要提示 请大家在书写代码之前确认.gitignore中已经加入了如下的语句,并做一次提交, 然后在开始写代码：
