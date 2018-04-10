@@ -4,6 +4,8 @@ import sys
 import cv2
 import shutil
 import re
+import math
+import numpy as np
 """
 这个脚本用来处理原始的数据，将图片按照短边600为标准进行缩放，如果缩放后长边超过1200，按照长边1200缩放，同时要缩放坐标
 要将数据整理成的格式如下，存放在dataset/for_train下
@@ -85,20 +87,33 @@ def txtdata_process(imagename, height, width, scale, resizedImage):
     iter_f = iter(f)  # 创建迭代器
     flag = True
     for line in iter_f:  # 遍历文件，一行行遍历，读取文本
-        # tmp = line.split(",")  # 将原始行以“，”分割
-        exp = r",? "
-        tmp = re.split(exp, line)
-        x0 = float(tmp[0])*scale
-        y0 = float(tmp[1])*scale
-        x1 = float(tmp[2])*scale
-        y1 = float(tmp[3])*scale
+        try:
+            # tmp = line.split(",")  # 将原始行以“，”分割
+            exp = r",? "
+            tmp = re.split(exp, line)
 
-        if testGT(x0, y0, x1, y1,  height, width):
-            fortraintxtfile.write(str(x0) + "," + str(y0) + "," + str(x1) + "," + str(y1) + "\n")
-            # huizhi(resizedImage, x0, y0, x1, y1)
-        else:
-            flag = False
-            break
+            # 对原始数据按顺时针排序
+            tmp1 = clockwise_data(tmp[0:8]).reshape(-1)
+
+            x0 = float(tmp1[0]) * scale
+            y0 = float(tmp1[1]) * scale
+            x1 = float(tmp1[2]) * scale
+            y1 = float(tmp1[3]) * scale
+
+            # x0 = float(tmp[0]) * scale
+            # y0 = float(tmp[1]) * scale
+            # x1 = float(tmp[2]) * scale
+            # y1 = float(tmp[3]) * scale
+
+            if testGT(x0, y0, x1, y1, height, width):
+                fortraintxtfile.write(str(x0) + "," + str(y0) + "," + str(x1) + "," + str(y1) + "\n")
+                # huizhi(resizedImage, x0, y0, x1, y1)
+            else:
+                flag = False
+                break
+        except:
+            print(imagename + "Error!")
+
     f.close()  # 关闭原始文件
     fortraintxtfile.close()  # 关闭写入文件
     if not flag:
@@ -131,6 +146,46 @@ def testGT(xmin, ymin, xmax, ymax, height, width):
     if ymax < 0 or ymax > height:
         return False
     return True
+
+
+def cos_dist(a, b):
+    if len(a) != len(b):
+        return None
+    part_up = 0.0
+    a_sq = 0.0
+    b_sq = 0.0
+    for a1, b1 in zip(a, b):
+        part_up += a1 * b1
+        a_sq += a1 ** 2
+        b_sq += b1 ** 2
+    part_down = math.sqrt(a_sq * b_sq)
+    if part_down == 0.0:
+        return None
+    else:
+        return part_up / part_down
+
+
+def clockwise_data(data_line):
+    r = np.full((4, 2), 0.0, dtype='float32')
+    for i in range(4):
+        r[i][0] = data_line[i * 2]
+        r[i][1] = data_line[i * 2 + 1]
+
+    xSorted = r[np.argsort(r[:, 0]), :]
+    leftMost = xSorted[:2, :]
+    rightMost = xSorted[2:, :]
+
+    leftMost = leftMost[np.argsort(leftMost[:, 1]), :]
+    (tl, bl) = leftMost
+
+    vector_0 = np.array(bl - tl)
+    vector_1 = np.array(rightMost[0] - tl)
+    vector_2 = np.array(rightMost[1] - tl)
+
+    angle = [np.arccos(cos_dist(vector_0, vector_1)), np.arccos(cos_dist(vector_0, vector_2))]
+    (br, tr) = rightMost[np.argsort(angle), :]
+
+    return np.array([tl, tr, br, bl], dtype="float32")
 
 
 if __name__ == "__main__":
