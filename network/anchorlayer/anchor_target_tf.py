@@ -148,6 +148,64 @@ def anchor_target_layer_py(rpn_cls_score, gt_boxes, im_info, _feat_stride):
     return rpn_labels, rpn_bbox_targets
 
 
+def get_y(x1, y1, x2, y2, x):
+    if x1 == x2:
+        return (y1+y2)/2.0
+    return (y2-y1)*(x-x1)/(x2-x1)+y1
+
+
+def _next_ind(ind):
+    assert 0 <= ind <= 3, "ind must be a valid index!"
+    if ind <= 2:
+        return ind + 1
+    return 0
+
+
+def _last_ind(ind):
+    assert 0 <= ind <= 3, "ind must be a valid index!"
+    if ind >= 1:
+        return ind - 1
+    return 3
+
+
+def _get_h_y(anchors, inds_positive, gt):
+    """
+    根据anchor的中心坐标，返回该中心坐标处，gt的高度,以及中心坐标
+    :param anchors: N*4 数组，每行为一个anchor
+    :param inds_positive: 一维数组， 指示正例的索引
+    :param gt: N*4 数组，每行为一个GT
+    :return: 一个一维数组，长度为N，返回正例的索引所指向的GT的高度
+    """
+    length = anchors.shape[0]
+    gt_heights = np.empty(shape=(length,), dtype=np.float32)
+    gt_y = np.empty(shape=(length,), dtype=np.float32)
+    for i in inds_positive:
+        ctr_x = (anchors[i, 0] + anchors[i, 2])/2
+        X = np.array([gt[i, 0], gt[i, 2], gt[i, 4], gt[i, 6]])
+        Y = np.array([gt[i, 1], gt[i, 3], gt[i, 5], gt[i, 7]])
+        ints_sort = np.argsort(X)
+        if (X[ints_sort[0]] <= ctr_x <= X[ints_sort[1]]) or (X[ints_sort[2]] <= ctr_x <= X[ints_sort[3]]):
+            cur_ind = ints_sort[0]
+            last_ind = _last_ind(cur_ind)
+            next_ind = _next_ind(cur_ind)
+            x = X[cur_ind]
+            y = Y[cur_ind]
+            x_last = X[last_ind]
+            y_last = Y[last_ind]
+            x_next = X[next_ind]
+            y_next = Y[next_ind]
+            ymin = get_y(x, y, x_last, y_last, ctr_x)
+            ymax = get_y(x, y, x_next, y_next, ctr_x)
+            gt_heights[i] = abs(ymin - ymax) + 1
+            gt_y[i] = (ymin + ymax) / 2
+        else:
+            ymin = get_y(gt[i, 0], gt[i, 1], gt[i, 2], gt[i, 3], ctr_x)
+            ymax = get_y(gt[i, 4], gt[i, 5], gt[i, 6], gt[i, 7], ctr_x)
+            gt_heights[i] = abs(ymax - ymin) + 1
+            gt_y[i] = (ymin + ymax) / 2
+    return gt_heights, gt_y
+
+
 # data是内部anchor的分类， count是总的anchor数目， inds是内部anchor的索引
 def _unmap(data, count, inds, fill=0):
     """ Unmap a subset of item (data) back to the original set of items (of
@@ -168,9 +226,8 @@ def bbox_transform(ex_rois, label, gt_rois):
     computes the distance from ground-truth boxes to the given boxes, normed by their size
     :param ex_rois: n * 4 numpy array, given boxes, anchors boxes
     :param label: 一维向量，是anchors的标签
-    :param gt_rois: n * 4 numpy array, ground-truth boxes
-
-    :return: deltas: n * 4 numpy array, ground-truth boxes
+    :param gt_rois: n * 8 numpy array, ground-truth boxes
+    :return: deltas: n * 4 numpy array, y和高度的回归
     """
 
     ex_widths = ex_rois[:, 2] - ex_rois[:, 0] + 1
@@ -195,11 +252,8 @@ def bbox_transform(ex_rois, label, gt_rois):
         'Invalid boxes found: {} {}'. \
             format(ex_rois[np.argmin(ex_widths), :], ex_rois[np.argmin(ex_heights[inds_positive]), :])
 
-    gt_heights = np.empty(shape=(length,), dtype=np.float32)
-    gt_heights[inds_positive] = gt_rois[inds_positive, 3] - gt_rois[inds_positive, 1] + 1.0
-
-    gt_ctr_y = np.empty(shape=(length,), dtype=np.float32)
-    gt_ctr_y[inds_positive] = gt_rois[inds_positive, 1] + 0.5 * gt_heights[inds_positive]
+    # 根据anchor所在的横坐标，获取其对应GT的高度
+    gt_heights, gt_ctr_y = _get_h_y(ex_rois, inds_positive, gt_rois)
 
     """
     对于ctpn文本检测，只需要回归y和高度坐标即可
@@ -223,7 +277,7 @@ def _compute_targets(ex_rois, labels, gt_rois):
 
     assert ex_rois.shape[0] == gt_rois.shape[0]
     assert ex_rois.shape[1] == 4
-    assert gt_rois.shape[1] == 4
+    assert gt_rois.shape[1] == 8
     assert len(labels) == ex_rois.shape[0]
 
     # bbox_transform函数的输入是anchors， 和GT的坐标部分

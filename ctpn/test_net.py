@@ -15,7 +15,7 @@ class TestClass(object):
         self._net = network
 
     # 画方框,被ctpn()调用
-    def draw_boxes(self, img, image_name, boxes, scale):
+    def draw_boxes(self, img, image_name, boxes):
         """
         :param img: 最原始的图片矩阵
         :param image_name: 图片地址
@@ -34,12 +34,6 @@ class TestClass(object):
                 #     continue
                 # 默认用红色线条绘制，可能性最低
                 color = (0, 0, 255)  # 颜色为BGR
-                # 大于0.9的，用绿色线条绘制
-                if box[8] >= 0.9:
-                    color = (0, 255, 0)
-                # 大于0.8的，用蓝色线条绘制
-                elif box[8] >= 0.8:
-                    color = (255, 0, 0)
                 cv2.line(img, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), color, 2)
                 cv2.line(img, (int(box[0]), int(box[1])), (int(box[4]), int(box[5])), color, 2)
                 cv2.line(img, (int(box[6]), int(box[7])), (int(box[2]), int(box[3])), color, 2)
@@ -77,10 +71,10 @@ class TestClass(object):
 
         # 读取图片
         image = cv2.imread(image_name)
-        shape = image.shape[:2]  # 获取高，宽
+        # shape = image.shape[:2]  # 获取高，宽
         # resize_im，返回缩放后的图片和相应的缩放比。缩放比定义为 修改后的图/原图
         img, scale = TestClass.resize_im(image, scale=self._cfg.TEST.SCALE, max_scale=self._cfg.TEST.MAX_SCALE)
-
+        shape = img.shape[:2]  # 获取缩放后的高，宽
         # 将图片去均值化
         im_orig = img.astype(np.float32, copy=True)
         im_orig -= self._cfg.TRAIN.PIXEL_MEANS
@@ -99,8 +93,11 @@ class TestClass(object):
         一个N×9的矩阵，表示N个拼接以后的完整的文本框。
         每一行，前八个元素一次是左上，右上，左下，右下的坐标，最后一个元素是文本框的分数
         """
+        # 缩放后的boxes
         boxes = textdetector.detect(boxes, scores, shape)
-        self.draw_boxes(image, image_name, boxes, scale)
+        boxes[:, 0:8] = boxes[:, 0:8] / scale
+        # 在原始图片上画图
+        self.draw_boxes(image, image_name, boxes)
         timer.toc()
         print(('Detection took {:.3f}s for '
                '{:d} object proposals').format(timer.total_time, boxes.shape[0]))
@@ -170,6 +167,6 @@ class TestClass(object):
         # sess.run是以列表形式返回结果，所以这里需要[0]，以取出数组
         rois = rois[0]
         scores = rois[:, 0]
-        # 除以缩放比，得到原图坐标，注意，这里已经恢复为原图坐标了！！！！！！！！！！！！！！！！！！！！！！
-        boxes = rois[:, 1:5] / scale
+        # 这里是缩放后的坐标
+        boxes = rois[:, 1:5]
         return scores, boxes

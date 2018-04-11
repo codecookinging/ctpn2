@@ -69,7 +69,7 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=(1
     proposals = clip_boxes(proposals, im_info[:2])  # 将所有的proposal修建一下，超出图像范围的将会被修剪掉
 
     # 移除那些proposal小于一定尺寸的proposal
-    keep = _filter_boxes(proposals, min_size * im_info[2])
+    keep = _filter_boxes(proposals, min_size)
     proposals = proposals[keep, :]  # 保留剩下的proposal
     scores = scores[keep]
     #  score按得分的高低进行排序,返回脚标
@@ -140,7 +140,6 @@ def clip_boxes(boxes, im_shape):
 
 def _filter_boxes(boxes, min_size):
     """Remove all boxes with any side smaller than min_size."""
-    ws = boxes[:, 2] - boxes[:, 0] + 1
     hs = boxes[:, 3] - boxes[:, 1] + 1
-    keep = np.where((ws >= min_size) & (hs >= min_size))[0]
+    keep = np.where(hs >= min_size)[0]
     return keep
