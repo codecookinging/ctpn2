@@ -1,7 +1,7 @@
 import os
 import math
 import csv
-
+import shutil
 import numpy as np
 import pandas as pd
 
@@ -25,16 +25,19 @@ def cos_dist(a, b):
 
 if __name__ == '__main__':
     # 原数据集的txt文件目录
-    in_path = "data/txt_9000/"
+    in_path = "E:/alidata/ICPR_text_train_part2_20180313/err"
     # 生成新txt文件目录
-    out_path = "data/result/"
+    out_path = "E:/alidata/ICPR_text_train_part2_20180313/err_refresh"
+    if os.path.exists(out_path):
+        shutil.rmtree(out_path)
+    os.makedirs(out_path)
 
     dirs = os.listdir(in_path)
     for i in dirs:
         try:
             if os.path.splitext(i)[1] == ".txt":
-                data = pd.read_csv(in_path + i, header=None, quoting=csv.QUOTE_NONE, encoding='utf8').iloc[:, :8].values
-                with open(out_path + i, 'w') as f:
+                data = pd.read_csv(os.path.join(in_path, i), header=None, quoting=csv.QUOTE_NONE, encoding='utf8').iloc[:, :8].values
+                with open(os.path.join(out_path, i), 'w') as f:
                     for index, d1 in enumerate(data):
                         r = np.full((4, 2), 0.0, dtype='float32')
                         for j in range(4):
@@ -56,6 +59,7 @@ if __name__ == '__main__':
                         (br, tr) = rightMost[np.argsort(angle), :]
 
                         f.write(','.join(list(map(str, (tl[0], tl[1], tr[0], tr[1], br[0], br[1], bl[0], bl[1])))) + '\n')
+
         except :
             print(i + " Error")
 

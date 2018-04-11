@@ -95,6 +95,8 @@ def anchor_target_layer_py(rpn_cls_score, gt_boxes, im_info, _feat_stride):
     num_fg = int(cfg.TRAIN.RPN_FG_FRACTION * cfg.TRAIN.RPN_BATCHSIZE)  # 前景个数
     num_bg = int(cfg.TRAIN.RPN_BATCHSIZE - num_fg)  # 后景个数
 
+    # =================================================================================下面这种方法可能会有问题
+    # 选取的都是得分最高和最低的图片在训练，可能会泛化能力下降
     increase_ind = np.argsort(max_overlaps)
     fg_inds = increase_ind[(total_valid_anchors - num_fg):total_valid_anchors]  # 最后几个可能是为前景,文字
     fg_inds = np.flip(fg_inds, axis=0)
@@ -115,7 +117,7 @@ def anchor_target_layer_py(rpn_cls_score, gt_boxes, im_info, _feat_stride):
             len_fg_inds += 1
         else:
             break
-
+    # =======================================================================================
     if len_fg_inds == 0:
         raise NoPositiveError("The number of positive proposals must be lager than zero")
 

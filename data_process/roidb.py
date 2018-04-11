@@ -16,7 +16,7 @@ class roidb(object):
 
         self.config = config
         self._image_path = config.TRAIN.TRAIN_PATH + '/Imageset'
-        self._image_gt = config.TRAIN.TRAIN_PATH + '/Imageinfo'
+        self._image_gt = os.path.join(config.TRAIN.TRAIN_PATH, 'Imageinfo')
         self._train_data_path = config.TRAIN.TRAIN_PATH  # E:\ctpn_yi\dataset\for_train
         self._setup()
 
@@ -99,17 +99,21 @@ class roidb(object):
 
             single_img_info = self._image_info[index]
             for ix, box in enumerate(gt_boxes):
-                box = box.strip().split(',')
-                x1 = float(box[0])
-                y1 = float(box[1])
-                x2 = float(box[2])
-                y2 = float(box[3])
-                x3 = float(box[4])
-                y3 = float(box[5])
-                x4 = float(box[6])
-                y4 = float(box[7])
-                boxes[ix, :] = [int(x1), int(y1), int(x2), int(y2),
-                                int(x3), int(y3), int(x4), int(y4),]
+                try:
+                    box = box.strip().split(',')
+                    x1 = float(box[0])
+                    y1 = float(box[1])
+                    x2 = float(box[2])
+                    y2 = float(box[3])
+                    x3 = float(box[4])
+                    y3 = float(box[5])
+                    x4 = float(box[6])
+                    y4 = float(box[7])
+                    boxes[ix, :] = [int(x1), int(y1), int(x2), int(y2),
+                                    int(x3), int(y3), int(x4), int(y4)]
+                except:
+                    print("the file {} has problems".format(image_name))
+                    raise
         return {
             'image_path': self._get_image_path_with_name(image_name),
             'image_name': image_name,
