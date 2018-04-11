@@ -9,8 +9,8 @@ class train_network(bn):
         self.data = tf.placeholder(tf.float32, shape=[1, None, None, 3], name='data')
         # 图像信息，一个三维向量，包含高，宽，缩放比例
         self.im_info = tf.placeholder(tf.float32, shape=(3,), name='im_info')
-        # GT_boxes信息，N×4矩阵，每一行为一个gt_box，分别代表x1,y1,x2,y2
-        self.gt_boxes = tf.placeholder(tf.float32, shape=[None, 4], name='gt_boxes')
+        # GT_boxes信息，N×8矩阵，每一行为一个gt_box，分别代表x1,y1,x2,y2,x3,y3,x4,y4,依次为左上，右上，右下，左下
+        self.gt_boxes = tf.placeholder(tf.float32, shape=[None, 8], name='gt_boxes')
         # dropout以后保留的概率
         self.keep_prob = tf.placeholder(tf.float32)
         self.setup()
@@ -54,7 +54,7 @@ class train_network(bn):
         # ===============“注意，网络输出的不是预测的盒子的四个坐标，而是y和高度的回归！！！！”========
         (self.feed('lstm_o').lstm_fc(512, 10 * 2, name='rpn_bbox_pred'))
 
-        # 用于盒子分类的，输出是[1, H, W, 20],
+        # 用于anchor分类的，输出是[1, H, W, 20],
         (self.feed('lstm_o').lstm_fc(512, 10 * 2, name='rpn_cls_score'))
 
         """

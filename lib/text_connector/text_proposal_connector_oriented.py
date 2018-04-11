@@ -18,6 +18,8 @@ class TextProposalConnector:
         p=np.poly1d(np.polyfit(X, Y, 1))
         return p(x1), p(x2)
 
+
+    # TODO 修改imsize
     def get_text_lines(self, text_proposals, scores, im_size):
         """
         text_proposals: 许多离散的，映射到了最原始图片的文本片段

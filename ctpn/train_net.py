@@ -106,14 +106,12 @@ class SolverWrapper(object):
                 print("warning: abandon a picture named {}, because it has "
                       "no gt_boxes".format(blobs['im_name']))
                 continue
-            # 确保 x1 =< x2, y1 =< y2
-            assert all(gt_boxes[:, 2] >= gt_boxes[:, 0])
-            assert all(gt_boxes[:, 3] >= gt_boxes[:, 1])
+
             feed_dict = {
                 self.net.data: blobs['data'],  # 一个形状为[批数，宽，高，通道数]的源图片，命名为“data”
                 self.net.im_info: blobs['im_info'],  # 一个三维向量，包含高，宽，缩放比例
                 self.net.keep_prob: 0.5,
-                self.net.gt_boxes: gt_boxes,  # GT_boxes信息，N×4矩阵，每一行为一个gt_box，分别代表x1,y1,x2,y2
+                self.net.gt_boxes: gt_boxes,  # GT_boxes信息，N×8矩阵，每一行为一个gt_box
             }
             try:
                 _ = sess.run(fetches=train_list, feed_dict=feed_dict)

@@ -20,7 +20,7 @@ class TextProposalConnector(object):
         """
         :param text_proposals: 离散的文本片段
         :param scores: 对应的分数
-        :param im_size: 图片大小
+        :param im_size: 缩放后的图片大小
         :return:返回一个N×9的矩阵，表示N个拼接以后的完整的文本框。
         每一行，前八个元素依次是左上，右上，左下，右下的坐标，最后一个元素是文本框的分数
         """

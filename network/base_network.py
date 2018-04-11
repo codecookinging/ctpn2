@@ -224,13 +224,7 @@ class base_network(object):
                                           [tf.float32])
 
             rpn_rois = tf.convert_to_tensor(tf.reshape(blob, [-1, 5]), name='rpn_rois')  # shape is (1 x H x W x A, 5)
-            # rpn_targets = tf.convert_to_tensor(bbox_delta, name='rpn_targets')  # shape is (1 x H x W x A, 2)
-            # self.layers['rpn_rois'] = rpn_rois
-            # self.layers['rpn_targets'] = rpn_targets
-
             return rpn_rois
-
-
 
     @layer
     def spatial_reshape_layer(self, input, d, name):
@@ -296,8 +290,6 @@ class base_network(object):
 
         # 有内权重，是因为只需计算y值和高度的回归;有外权重，是因为只需计算正例的box回归
         rpn_loss_box_n = tf.reduce_sum(self.smooth_l1_dist((rpn_bbox_pred - rpn_bbox_targets)), reduction_indices=[1])
-
-        # rpn_loss_box = tf.reduce_sum(rpn_loss_box_n) / (tf.reduce_sum(tf.cast(fg_keep, tf.float32)) + 1)
 
         rpn_loss_box = tf.reduce_sum(rpn_loss_box_n) / (tf.cast(tf.shape(fg_keep)[0], tf.float32) + 1)
         rpn_cross_entropy = tf.reduce_mean(rpn_cross_entropy_n)

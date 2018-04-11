@@ -5,13 +5,7 @@ import numpy as np
 
 def get_training_roidb(config):
     print('Preparing training data...')
-
     base_roidb = roidb(config)
-
-    # 是否要翻转图片，如果需要的话将翻转的图片追加
-    if config.TRAIN.USE_FLIPPED:
-        base_roidb.append_flipped_images()
-    print('done')
     return base_roidb
 
 
@@ -58,10 +52,10 @@ class roidb(object):
                 line = line.strip().split(',')
                 image_index.append(line[0])  # 图片名
                 # 这里必须是高在前，宽在后
-                height = int(line[1])
-                wight = int(line[2])
-                channal = int(line[3])
-                scale = float(line[4])
+                height = int(line[1])  # 图片的高
+                wight = int(line[2])   # 图片的宽
+                channal = int(line[3])  # 图片的通道数
+                scale = float(line[4])  # 图片的缩放比
                 image_info.append(list([height, wight, channal, scale]))
         # 一个列表，列表的长度是图片的张数，列表的每个元素是一个字符串，存放图片的名字
         self._image_index = image_index
@@ -89,7 +83,7 @@ class roidb(object):
         """
         gt_roidb是一个列表，列表的每个元素是一个字典，字典的键有
         'image_name'：字符串，表示图片名字
-        'boxes'：N行4列矩阵，uint16 每一行表示一个GT
+        'boxes'：N行8列矩阵，np.int32 每一行表示一个GT,依次是左上，右上，右下，左下
         ”height“:高
         "width"：宽
         ”image_path“：图片路径
@@ -101,7 +95,7 @@ class roidb(object):
         with open(filename, 'r') as f:
             gt_boxes = f.readlines()
             num_objs = len(gt_boxes)
-            boxes = np.zeros((num_objs, 4), dtype=np.int32)
+            boxes = np.zeros((num_objs, 8), dtype=np.int32)
 
             single_img_info = self._image_info[index]
             for ix, box in enumerate(gt_boxes):
@@ -110,8 +104,12 @@ class roidb(object):
                 y1 = float(box[1])
                 x2 = float(box[2])
                 y2 = float(box[3])
-                boxes[ix, :] = [int(x1), int(y1), int(x2), int(y2)]
-
+                x3 = float(box[4])
+                y3 = float(box[5])
+                x4 = float(box[6])
+                y4 = float(box[7])
+                boxes[ix, :] = [int(x1), int(y1), int(x2), int(y2),
+                                int(x3), int(y3), int(x4), int(y4),]
         return {
             'image_path': self._get_image_path_with_name(image_name),
             'image_name': image_name,
@@ -120,16 +118,3 @@ class roidb(object):
             'image_scale': single_img_info[3],
             'gt_boxes': boxes,
         }
-
-    def append_flipped_images(self):
-        pass
-
-    def add_bbox_regression_targets(self):
-        pass
-
-    def _compute_targets(self):
-        pass
-
-#
-# if __name__ == 'main':
-#     d = roidb()
