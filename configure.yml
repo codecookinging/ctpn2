@@ -20,10 +20,10 @@ TRAIN:
   RPN_FG_FRACTION: 0.5
   RPN_BATCHSIZE: 256
   OHEM: False
-  LEARNING_RATE: 0.0001
+  LEARNING_RATE: 0.001
   SOLVER: "Momentum"
   MOMENTUM: 0.9
-  STEPSIZE: 12000
+  STEPSIZE: 14000
   GAMMA: 0.1
   DISPLAY: 50
   MAX_ITER: 50000
@@ -32,7 +32,8 @@ TRAIN:
 TEST:
   DETECT_MODE: "O" # 字符"O"表示检测倾斜的，字符"H"表示检测水平的
   DATA_DIR: E:\ctpn_yi\dataset\for_test # 测试图片的存储路径
-  RESULT_DIR: E:\ctpn_yi\data\results # 结果路径
+  RESULT_DIR_PIC: E:\ctpn_yi\data\results\pic # 结果图片路径
+  RESULT_DIR_TXT: E:\ctpn_yi\data\results\gt_txt # 结果图片路径
   SCALES: 600
   SCALE: 600
   MAX_SCALE: 1200
@@ -43,7 +44,7 @@ TEST:
   MAX_HORIZONTAL_GAP: 50  # 水平片段大于该值的，就不连接在一起了
   TEXT_PROPOSALS_MIN_SCORE: 0.92 # 对于anchor而言，大于该分数就判定为正例
   TEXT_PROPOSALS_NMS_THRESH: 0.2
-  MIN_V_OVERLAPS: 0.7
+  MIN_V_OVERLAPS: 0.5
   MIN_SIZE_SIM: 0.7
   RPN_PRE_NMS_TOP_N: 12000
   RPN_POST_NMS_TOP_N: 2000

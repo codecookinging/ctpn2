@@ -150,9 +150,12 @@ def anchor_target_layer_py(rpn_cls_score, gt_boxes, im_info, _feat_stride):
     return rpn_labels, rpn_bbox_targets
 
 
-def get_y(x1, y1, x2, y2, x):
+def get_y(x1, y1, x2, y2, x, min_val=True):
     if x1 == x2:
-        return (y1+y2)/2.0
+        if min_val:
+            return min(y1, y2)
+        else:
+            return max(y1, y2)
     return (y2-y1)*(x-x1)/(x2-x1)+y1
 
 
@@ -185,8 +188,8 @@ def _get_h_y(anchors, inds_positive, gt):
         ctr_x = (anchors[i, 0] + anchors[i, 2])/2
         X = np.array([gt[i, 0], gt[i, 2], gt[i, 4], gt[i, 6]])
         Y = np.array([gt[i, 1], gt[i, 3], gt[i, 5], gt[i, 7]])
-        ints_sort = np.argsort(X)
-        if (X[ints_sort[0]] <= ctr_x <= X[ints_sort[1]]) or (X[ints_sort[2]] <= ctr_x <= X[ints_sort[3]]):
+        ints_sort = np.argsort(X, kind='mergesort')
+        if X[ints_sort[0]] <= ctr_x <= X[ints_sort[1]]:
             cur_ind = ints_sort[0]
             last_ind = _last_ind(cur_ind)
             next_ind = _next_ind(cur_ind)
@@ -196,10 +199,26 @@ def _get_h_y(anchors, inds_positive, gt):
             y_last = Y[last_ind]
             x_next = X[next_ind]
             y_next = Y[next_ind]
-            ymin = get_y(x, y, x_last, y_last, ctr_x)
-            ymax = get_y(x, y, x_next, y_next, ctr_x)
+            ymin = get_y(x, y, x_last, y_last, ctr_x, False)
+            ymax = get_y(x, y, x_next, y_next, ctr_x, True)
             gt_heights[i] = abs(ymin - ymax) + 1
             gt_y[i] = (ymin + ymax) / 2
+
+        elif X[ints_sort[2]] <= ctr_x <= X[ints_sort[3]]:
+            cur_ind = ints_sort[3]
+            last_ind = _last_ind(cur_ind)
+            next_ind = _next_ind(cur_ind)
+            x = X[cur_ind]
+            y = Y[cur_ind]
+            x_last = X[last_ind]
+            y_last = Y[last_ind]
+            x_next = X[next_ind]
+            y_next = Y[next_ind]
+            ymin = get_y(x, y, x_last, y_last, ctr_x, True)
+            ymax = get_y(x, y, x_next, y_next, ctr_x, False)
+            gt_heights[i] = abs(ymin - ymax) + 1
+            gt_y[i] = (ymin + ymax) / 2
+
         else:
             ymin = get_y(gt[i, 0], gt[i, 1], gt[i, 2], gt[i, 3], ctr_x)
             ymax = get_y(gt[i, 4], gt[i, 5], gt[i, 6], gt[i, 7], ctr_x)

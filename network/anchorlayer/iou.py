@@ -7,9 +7,12 @@ from shapely.geometry import Polygon
 """
 
 
-def get_y(x1, y1, x2, y2, x):
+def get_y(x1, y1, x2, y2, x, min_val=True):
     if x1 == x2:
-        return (y1+y2)/2.0
+        if min_val:
+            return min(y1, y2)
+        else:
+            return max(y1, y2)
     return (y2-y1)*(x-x1)/(x2-x1)+y1
 
 
@@ -28,11 +31,12 @@ def _last_ind(ind):
 
 
 def get_box_y(x1, y1, x2, y2, x3, y3, x4, y4, ctr_x):
-    # x1, y1, x2, y2, x3, y3, x4, y4,构成了一个盒子的四个坐标，该函数要返回ctr_x处的竖直线与盒子交点的两个纵坐标
+    # x1, y1, x2, y2, x3, y3, x4, y4,构成了一个盒子的四个坐标，
+    # 该函数要返回ctr_x处的竖直线与盒子交点的两个纵坐标
     X = np.array([x1, x2, x3, x4])
     Y = np.array([y1, y2, y3, y4])
-    ints_sort = np.argsort(X)
-    if (X[ints_sort[0]] <= ctr_x <= X[ints_sort[1]]) or (X[ints_sort[2]] <= ctr_x <= X[ints_sort[3]]):
+    ints_sort = np.argsort(X, kind='mergesort')
+    if X[ints_sort[0]] <= ctr_x <= X[ints_sort[1]]:
         cur_ind = ints_sort[0]
         last_ind = _last_ind(cur_ind)
         next_ind = _next_ind(cur_ind)
@@ -42,10 +46,22 @@ def get_box_y(x1, y1, x2, y2, x3, y3, x4, y4, ctr_x):
         y_last = Y[last_ind]
         x_next = X[next_ind]
         y_next = Y[next_ind]
-        ymin = get_y(x, y, x_last, y_last, ctr_x)
-        ymax = get_y(x, y, x_next, y_next, ctr_x)
+        ymin = get_y(x, y, x_last, y_last, ctr_x, False)
+        ymax = get_y(x, y, x_next, y_next, ctr_x, True)
+    elif X[ints_sort[2]] <= ctr_x <= X[ints_sort[3]]:
+        cur_ind = ints_sort[3]
+        last_ind = _last_ind(cur_ind)
+        next_ind = _next_ind(cur_ind)
+        x = X[cur_ind]
+        y = Y[cur_ind]
+        x_last = X[last_ind]
+        y_last = Y[last_ind]
+        x_next = X[next_ind]
+        y_next = Y[next_ind]
+        ymin = get_y(x, y, x_last, y_last, ctr_x, True)
+        ymax = get_y(x, y, x_next, y_next, ctr_x, False)
     else:
-        ymin = get_y(x1, y2, x2, y2, ctr_x)
+        ymin = get_y(x1, y1, x2, y2, ctr_x)
         ymax = get_y(x3, y3, x4, y4, ctr_x)
     return ymin, ymax
 

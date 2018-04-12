@@ -21,13 +21,13 @@ class TestClass(object):
         :param image_name: 图片地址
         :param boxes: N×9的矩阵，表示N个拼接以后的完整的文本框。
         每一行，前八个元素一次是左上，右上，左下，右下的坐标，最后一个元素是文本框的分数
-        :param scale: 缩放比
         :return:
         """
         # base_name = image_name.split('/')[-1]
         base_name = os.path.basename(image_name)
-        # with open(self._cfg.TEST.RESULT_DIR+'/' + 'res_{}.txt'.format(base_name.split('.')[0]), 'w') as f:
-        with open(os.path.join(self._cfg.TEST.RESULT_DIR, 'res_{}.txt'.format(base_name.split('.')[0])), 'w') as f:
+        b_name, ext = os.path.splitext(base_name)
+
+        with open(os.path.join(self._cfg.TEST.RESULT_DIR_TXT, '{}.txt'.format(b_name)), 'w') as f:
             for box in boxes:
                 # TODO 下面注释掉的这两行不知是啥意思
                 # if np.linalg.norm(box[0] - box[1]) < 5 or np.linalg.norm(box[3] - box[0]) < 5:
@@ -38,16 +38,19 @@ class TestClass(object):
                 cv2.line(img, (int(box[0]), int(box[1])), (int(box[4]), int(box[5])), color, 2)
                 cv2.line(img, (int(box[6]), int(box[7])), (int(box[2]), int(box[3])), color, 2)
                 cv2.line(img, (int(box[4]), int(box[5])), (int(box[6]), int(box[7])), color, 2)
+                x1 = box[0]
+                y1 = box[1]
+                x2 = box[2]
+                y2 = box[3]
+                x4 = box[4]
+                y4 = box[5]
+                x3 = box[6]
+                y3 = box[7]
 
-                min_x = min(int(box[0]), int(box[2]), int(box[4]), int(box[6]))
-                min_y = min(int(box[1]), int(box[3]), int(box[5]), int(box[7]))
-                max_x = max(int(box[0]), int(box[2]), int(box[4]), int(box[6]))
-                max_y = max(int(box[1]), int(box[3]), int(box[5]), int(box[7]))
-
-                line = ','.join([str(min_x), str(min_y), str(max_x), str(max_y)]) + '\r\n'
+                line = ','.join([str(x1), str(y1), str(x2), str(y2), str(x3), str(y3), str(x4), str(y4)]) + '\n'
                 f.write(line)
 
-        cv2.imwrite(os.path.join(self._cfg.TEST.RESULT_DIR, base_name), img)
+        cv2.imwrite(os.path.join(self._cfg.TEST.RESULT_DIR_PIC, base_name), img)
 
     # 改变图片的尺寸，被ctpn()调用
     @ staticmethod
@@ -66,8 +69,7 @@ class TestClass(object):
         :param image_name: 所要测试的单张图片的目录
         :return:
         """
-        timer = Timer()
-        timer.tic()
+
 
         # 读取图片
         image = cv2.imread(image_name)
@@ -98,16 +100,21 @@ class TestClass(object):
         boxes[:, 0:8] = boxes[:, 0:8] / scale
         # 在原始图片上画图
         self.draw_boxes(image, image_name, boxes)
-        timer.toc()
-        print(('Detection took {:.3f}s for '
-               '{:d} object proposals').format(timer.total_time, boxes.shape[0]))
+
 
     def test_net(self, graph):
-        # 定义结果输出的路径(trd 是test_result_dir缩写 )
-        trd = self._cfg.TEST.RESULT_DIR
-        if os.path.exists(trd):
-            shutil.rmtree(trd)
-        os.makedirs(trd)
+
+        timer = Timer()
+        timer.tic()
+
+        if os.path.exists(self._cfg.TEST.RESULT_DIR_TXT):
+            shutil.rmtree(self._cfg.TEST.RESULT_DIR_TXT)
+        os.makedirs(self._cfg.TEST.RESULT_DIR_TXT)
+
+        if os.path.exists(self._cfg.TEST.RESULT_DIR_PIC):
+            shutil.rmtree(self._cfg.TEST.RESULT_DIR_PIC)
+        os.makedirs(self._cfg.TEST.RESULT_DIR_PIC)
+
         saver = tf.train.Saver()
         # 创建一个Session
         config = tf.ConfigProto(allow_soft_placement=True)
@@ -137,17 +144,24 @@ class TestClass(object):
         im_names = os.listdir(self._cfg.TEST.DATA_DIR)
 
         assert len(im_names) > 0, "Nothing to test"
+        i = 0
         for im in im_names:
             im_name = os.path.join(self._cfg.TEST.DATA_DIR, im)
-            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            print(('Testing for image {:s}'.format(im_name)))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print(('Testing for image {:s}'.format(im_name)))
             try:
                 self.ctpn(sess, self._net, im_name)
             except NoPositiveError:
-                print("Warning!!, get no region of interest in picture {}".format(im_name))
+                print("Warning!!, get no region of interest in picture {}".format(im))
                 continue
             except:
-                raise
+                print("the pic {} may has problems".format(im))
+                continue
+            i += 1
+            if i % 10 == 0:
+                timer.toc()
+                print('Detection took {:.3f}s for 10 pic'.format(timer.total_time))
+
         # 最后关闭session
         sess.close()
 
