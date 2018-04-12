@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import csv
 from shapely.geometry import Polygon
 
 
@@ -10,9 +11,10 @@ def height_normalization():
 
 def get_box_coordinate(data):
     r = np.full((4, 2), 0.0, dtype='float32')
+    data = data.strip().split(",")
     for j in range(4):
-        r[j][0] = data[j * 2]
-        r[j][1] = data[j * 2 + 1]
+        r[j][0] = float(data[j * 2])
+        r[j][1] = float(data[j * 2 + 1])
     return r
 
 
@@ -85,11 +87,23 @@ if __name__ == '__main__':
     # 读取数据
     dirs = os.listdir(gt_path)
     for i in dirs:
-
         if os.path.splitext(i)[1] == ".txt":
             # 打开同名标注文件与预测结果文件，进行比对
-            gt_data = pd.read_csv(os.path.join(gt_path, i), header=None).iloc[:, :8].values
-            dr_data = pd.read_csv(os.path.join(dr_path, i), header=None).iloc[:, :8].values
+            # gt_data = pd.read_csv(os.path.join(gt_path, i), header=None,
+            #                       quoting=csv.QUOTE_NONE, encoding='utf8').iloc[:, :8].values
+            # dr_data = pd.read_csv(os.path.join(dr_path, i), header=None,
+            #                       quoting=csv.QUOTE_NONE, encoding='utf8').iloc[:, :8].values
+            gt = open(os.path.join(gt_path, i), "r", encoding="utf_8")
+            try:
+                dr = open(os.path.join(dr_path, i), "r", encoding="utf_8")
+            except:
+                print("the pic {} doesn't exists".format(os.path.join(dr_path, i)))
+                gt.close()
+                continue
+            gt_data = gt.readlines()
+            dr_data = dr.readlines()
+
+
 
             # 通过计算iou的方式获得p，r
             # p，r即计算出的单张图片的精度与召回
@@ -101,6 +115,10 @@ if __name__ == '__main__':
             total_p_n += len(p)
             total_r += np.sum(r)
             total_r_n += len(r)
+
+
+            gt.close()
+            dr.close()
 
     # 计算总精度
     precision = total_p / total_p_n

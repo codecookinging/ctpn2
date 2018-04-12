@@ -36,7 +36,8 @@ if __name__ == '__main__':
     for i in dirs:
         try:
             if os.path.splitext(i)[1] == ".txt":
-                data = pd.read_csv(os.path.join(in_path, i), header=None, quoting=csv.QUOTE_NONE, encoding='utf8').iloc[:, :8].values
+                data = pd.read_csv(os.path.join(in_path, i), header=None,
+                                   quoting=csv.QUOTE_NONE, encoding='utf8').iloc[:, :8].values
                 with open(os.path.join(out_path, i), 'w') as f:
                     for index, d1 in enumerate(data):
                         r = np.full((4, 2), 0.0, dtype='float32')
