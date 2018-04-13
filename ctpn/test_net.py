@@ -38,6 +38,8 @@ class TestClass(object):
                 cv2.line(img, (int(box[0]), int(box[1])), (int(box[4]), int(box[5])), color, 2)
                 cv2.line(img, (int(box[6]), int(box[7])), (int(box[2]), int(box[3])), color, 2)
                 cv2.line(img, (int(box[4]), int(box[5])), (int(box[6]), int(box[7])), color, 2)
+                # cv2.putText(img, 'score:{}'.format(box[8]), (int(box[0]), int(box[1])),
+                #             cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2)
                 x1 = box[0]
                 y1 = box[1]
                 x2 = box[2]

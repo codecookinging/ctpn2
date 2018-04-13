@@ -89,41 +89,84 @@ def anchor_target_layer_py(rpn_cls_score, gt_boxes, im_info, _feat_stride):
     # argmax_overlaps[0]表示第0号anchor与所有GT的IOU最大值的脚标
     argmax_overlaps = overlaps.argmax(axis=1)
 
-    # 返回一个一维数组，第i号元素的值表示第i个anchor与最可能的GT之间的IOU
-    max_overlaps = overlaps[np.arange(total_valid_anchors), argmax_overlaps]
+    # # 返回一个一维数组，第i号元素的值表示第i个anchor与最可能的GT之间的IOU
+    # max_overlaps = overlaps[np.arange(total_valid_anchors), argmax_overlaps]
+    #
+    # num_fg = int(cfg.TRAIN.RPN_FG_FRACTION * cfg.TRAIN.RPN_BATCHSIZE)  # 前景个数
+    # num_bg = int(cfg.TRAIN.RPN_BATCHSIZE - num_fg)  # 后景个数
 
-    num_fg = int(cfg.TRAIN.RPN_FG_FRACTION * cfg.TRAIN.RPN_BATCHSIZE)  # 前景个数
-    num_bg = int(cfg.TRAIN.RPN_BATCHSIZE - num_fg)  # 后景个数
+
+
+    # =================================================================================下面这种方法可能会有问题
+    max_overlaps = overlaps[np.arange(total_valid_anchors), argmax_overlaps]
+    # 最大iou < 0.3 的设置为负例
+    labels[max_overlaps < cfg.TRAIN.RPN_NEGATIVE_OVERLAP] = 0
+    # cfg.TRAIN.RPN_POSITIVE_OVERLAP = 0.8
+    labels[max_overlaps >= cfg.TRAIN.RPN_POSITIVE_OVERLAP] = 1  # overlap大于0.8的认为是前景
+
+    # TODO 限制正样本的数量不超过150个
+    # TODO 这个后期可能还需要修改，毕竟如果使用的是字符的片段，那个正样本的数量是很多的。
+    num_fg = int(cfg.TRAIN.RPN_FG_FRACTION * cfg.TRAIN.RPN_BATCHSIZE)  # 0.5*300
+    fg_inds = np.where(labels == 1)[0]
+
+    if not len(fg_inds) > 0:
+        raise NoPositiveError("The number of positive proposals must be lager than zero")
+
+    if len(fg_inds) > num_fg:
+        disable_inds = npr.choice(
+            fg_inds, size=(len(fg_inds) - num_fg), replace=False)  # 随机去除掉一些正样本
+        labels[disable_inds] = -1  # 变为-1
+
+    # subsample negative labels if we have too many
+    # 对负样本进行采样，如果负样本的数量太多的话
+    # 正负样本总数是300，限制正样本数目最多150，
+    num_bg = cfg.TRAIN.RPN_BATCHSIZE - np.sum(labels == 1)
+
+    bg_inds = np.where(labels == 0)[0]
+
+    if not len(bg_inds) > 0:
+        raise NoPositiveError("The number of negtive proposals must be lager than zero")
+
+    if len(bg_inds) > num_bg:
+        disable_inds = npr.choice(
+            bg_inds, size=(len(bg_inds) - num_bg), replace=False)
+        labels[disable_inds] = -1
+
+
+
+
+
+
 
     # =================================================================================下面这种方法可能会有问题
     # 选取的都是得分最高和最低的图片在训练，可能会泛化能力下降
-    increase_ind = np.argsort(max_overlaps)
-    fg_inds = increase_ind[(total_valid_anchors - num_fg):total_valid_anchors]  # 最后几个可能是为前景,文字
-    fg_inds = np.flip(fg_inds, axis=0)
-    bg_inds = increase_ind[0:num_bg]  # 最开始几个可能为背景
+    # increase_ind = np.argsort(max_overlaps)
+    # fg_inds = increase_ind[(total_valid_anchors - num_fg):total_valid_anchors]  # 最后几个可能是为前景,文字
+    # fg_inds = np.flip(fg_inds, axis=0)
+    # bg_inds = increase_ind[0:num_bg]  # 最开始几个可能为背景
+    #
+    # len_bg_inds = 0
+    # for i in bg_inds:
+    #     if max_overlaps[i] < cfg.TRAIN.RPN_NEGATIVE_OVERLAP:
+    #         labels[i] = 0
+    #         len_bg_inds += 1
+    #     else:
+    #         break
+    #
+    # len_fg_inds = 0
+    # for i in fg_inds:
+    #     if max_overlaps[i] > cfg.TRAIN.RPN_POSITIVE_OVERLAP:
+    #         labels[i] = 1
+    #         len_fg_inds += 1
+    #     else:
+    #         break
 
-    len_bg_inds = 0
-    for i in bg_inds:
-        if max_overlaps[i] < cfg.TRAIN.RPN_NEGATIVE_OVERLAP:
-            labels[i] = 0
-            len_bg_inds += 1
-        else:
-            break
-
-    len_fg_inds = 0
-    for i in fg_inds:
-        if max_overlaps[i] > cfg.TRAIN.RPN_POSITIVE_OVERLAP:
-            labels[i] = 1
-            len_fg_inds += 1
-        else:
-            break
+    # if len_fg_inds == 0:
+    #     raise NoPositiveError("The number of positive proposals must be lager than zero")
+    #
+    # if len_bg_inds == 0:
+    #     raise NoPositiveError("The number of negtive proposals must be lager than zero")
     # =======================================================================================
-    if len_fg_inds == 0:
-        raise NoPositiveError("The number of positive proposals must be lager than zero")
-
-    if len_bg_inds == 0:
-        raise NoPositiveError("The number of negtive proposals must be lager than zero")
-
     # 至此， 上好标签，开始计算rpn-box的真值
     # --------------------------------------------------------------
     # 根据anchor和gtbox计算得真值（anchor和gtbox之间的偏差）

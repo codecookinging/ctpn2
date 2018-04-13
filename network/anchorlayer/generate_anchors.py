@@ -24,6 +24,7 @@ def scale_anchor(anchor, h, w):
 
 def generate_anchors():
     heights = [11, 16, 23, 33, 48, 68, 97, 139, 198, 283]
+
     widths = 16
     sizes = []
     for h in heights:

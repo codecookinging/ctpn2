@@ -37,4 +37,4 @@ if __name__ == '__main__':
     vgg16_net_param = '../dataset/pretrain/VGG_imagenet.npy'
     network = get_train_network(cfg)
     train_net(cfg, network, roidb, checkpoints_dir, max_iter=cfg.TRAIN.MAX_ITER,
-              pretrain_model=vgg16_net_param, restore=False)
+              pretrain_model=vgg16_net_param, restore=True)

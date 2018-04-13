@@ -94,7 +94,8 @@ def bbox_overlaps(anchors, gt_boxes):
     for n in range(N):  # 对anchor的遍历
         # 确保对于anchor而言，x2 >= x1
         assert anchors[n, 2] >= anchors[n, 0], "in file {}, x2 must be larger than x1 in anchor".format(__file__)
-        anchor_width = anchors[n, 2] - anchors[n, 0] + 1  # anchor的宽度
+        # anchor_width = anchors[n, 2] - anchors[n, 0] + 1  # anchor的宽度
+        anchor_width = anchors[n, 2] - anchors[n, 0]  # 调库以后，这里就不能加1了。anchor的宽度
         anchor_x = (anchors[n, 2] + anchors[n, 0])/2.0  # anchor的中心坐标
         an_coords = ((anchors[n, 0], anchors[n, 1]),
                      (anchors[n, 2], anchors[n, 1]),
@@ -112,11 +113,12 @@ def bbox_overlaps(anchors, gt_boxes):
                                          gt_boxes[k, 4], gt_boxes[k, 5], gt_boxes[k, 6], gt_boxes[k, 7], anchor_x)
                 ymin = min([gt_y1, gt_y2, anchors[n, 1], anchors[n, 3]])
                 ymax = max([gt_y1, gt_y2, anchors[n, 1], anchors[n, 3]])
-                uh = ymax - ymin + 1
-
+                # uh = ymax - ymin + 1
+                uh = ymax - ymin
                 overlaps[n, k] = cross_area / (uh*anchor_width)
     return overlaps
 
 
 if __name__ == "__main__":
-    from IPython import embed; embed()
+    from IPython import embed
+    embed()
