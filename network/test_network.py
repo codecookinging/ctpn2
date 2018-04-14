@@ -11,15 +11,6 @@ class test_network(base_network):
         self.im_info = tf.placeholder(tf.float32, shape=(3,))  # 图片信息，（高，宽，缩放比）
         self.keep_prob = tf.placeholder(tf.float32)
         self.setup()
-    #     self.__saver = tf.train.Saver()
-    #
-    # @property
-    # def saver(self):
-    #     return self.__saver
-    #
-    # @saver.setter
-    # def saver(self, s):
-    #     pass
 
     def setup(self):
         self.inputs = []
@@ -53,8 +44,8 @@ class test_network(base_network):
         # 往两个方向走，一个用于给类别打分，一个用于盒子回归
         # 用于盒子回归的，输出是10个anchor，每个anchor有有2个回归，即y和高度,形状是[1, H, W, 20],
         # ===============“注意，网络输出的不是预测的盒子的四个坐标，而是y和高度的回归！！！！”========
-        (self.feed('lstm_o').lstm_fc(512, 10 * 2, name='rpn_bbox_pred'))
-        (self.feed('lstm_o').lstm_fc(512, 10 * 2, name='rpn_cls_score'))
+        (self.feed('lstm_o').lstm_fc(512, self._cfg.COMMON.NUM_ANCHORS * 2, name='rpn_bbox_pred'))
+        (self.feed('lstm_o').lstm_fc(512, self._cfg.COMMON.NUM_ANCHORS * 2, name='rpn_cls_score'))
 
         # 计算分数与回归
         # 'rpn_cls_score_reshape'里面装着softmax之前的得分，形状为(1, H, WxA, 2)
@@ -65,7 +56,7 @@ class test_network(base_network):
 
         # 输出softmax以后的概率，形状为(1, H, W, Ax2)
         (self.feed('rpn_cls_prob')
-            .spatial_reshape_layer(10 * 2, name='rpn_cls_prob_reshape'))
+            .spatial_reshape_layer(self._cfg.COMMON.NUM_ANCHORS * 2, name='rpn_cls_prob_reshape'))
 
         # 喂入的数据 分别是：
         """

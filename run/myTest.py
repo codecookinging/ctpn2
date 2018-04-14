@@ -5,10 +5,15 @@
 # cv2.imshow("yi", img)
 # cv2.waitKey(0)
 
-import numpy as np
-a = np.array([[1, 2],[3, 4], [5, 6]])
-b = tuple(a)
-print(b)
+# import numpy as np
+# a = np.array([[1, 2],[3, 4], [5, 6]])
+# b = tuple(a)
+# print(b)
+#
+# c = [(row[0], row[1]) for row in a]
+# print(tuple(c))
+# print("in file {}, x2 must be larger than x1 in anchor".format(__file__))
 
-c = [(row[0], row[1]) for row in a]
-print(tuple(c))
+import numpy as np
+a = np.logspace(start=0, stop=16, num=16, base=1.25, endpoint=False)*8
+print(a)

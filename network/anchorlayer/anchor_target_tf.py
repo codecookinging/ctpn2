@@ -11,7 +11,7 @@ cfg = load_config()
 def anchor_target_layer_py(rpn_cls_score, gt_boxes, im_info, _feat_stride):
     # 生成基本的anchor,一共10个,返回一个10行4列矩阵，每行为一个anchor，返回的只是基于中心的相对坐标
     # 这里返回的4个值是对应的某个anchor的xmin, xmax, ymin, ymax
-    _anchors = generate_anchors()
+    _anchors = generate_anchors(cfg)
     _num_anchors = _anchors.shape[0]  # 10个anchor
 
     # allow boxes to sit over the edge by a small amount

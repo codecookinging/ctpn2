@@ -21,7 +21,7 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=(1
     rpn_rois : (1 x H x W x A, 5) e.g. [0, x1, y1, x2, y2]
 
     """
-    _anchors = generate_anchors()  # 生成基本的10个anchor
+    _anchors = generate_anchors(cfg)  # 生成基本的10个anchor
     _num_anchors = _anchors.shape[0]  # 10个anchor
 
     assert rpn_cls_prob_reshape.shape[0] == 1, \
